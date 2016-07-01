@@ -11,14 +11,13 @@ import java.util.stream.IntStream;
 
 import static io.hahai.SudokuGrid.CellState.PLAYABLE;
 import static io.hahai.SudokuGrid.CellState.PRESET;
-import static io.hahai.SudokuGrid.CellState.ATTEMPTED;
 
 public final class SudokuGrid {
 
     private final int gridDimension;
     private final int blockDimension;
 
-    public enum CellState {PRESET, PLAYABLE, ATTEMPTED}
+    public enum CellState {PRESET, PLAYABLE }
 
     private List<Cell> cells;
 
@@ -33,7 +32,7 @@ public final class SudokuGrid {
         if(!playableOptions(index).contains(value)) {
             throw new IllegalArgumentException("Cannot play this value for this cell");
         }
-        cells.set(index, new Cell(index, ATTEMPTED, value));
+        cells.set(index, new Cell(index, PLAYABLE, value));
     }
 
     public List<Cell> playableCells() {
@@ -63,12 +62,9 @@ public final class SudokuGrid {
     public List<Integer> playableOptions(int index) {
         if (playable(index)) {
             List<Integer> reply = create1ToNList(gridDimension);
-            List<Integer> column = getColumnForCell(index);
-            List<Integer> block = getBlockForCell(index);
-            List<Integer> row = getRowForCell(index);
-            reply.removeAll(column);
-            reply.removeAll(block);
-            reply.removeAll(row);
+            reply.removeAll(getColumnForCell(index));
+            reply.removeAll(getBlockForCell(index));
+            reply.removeAll(getRowForCell(index));
             return reply;
         }
         return new ArrayList<>();
@@ -76,7 +72,7 @@ public final class SudokuGrid {
 
     public boolean playable(int index) {
         CellState state = getCell(index).getState();
-        return state == PLAYABLE || state == ATTEMPTED;
+        return state == PLAYABLE;
     }
 
     public boolean gridValid() {
@@ -85,7 +81,7 @@ public final class SudokuGrid {
     }
 
     public boolean gridComplete() {
-        return !hasPlayableCellsInGrid() &&
+        return !hasZeroedCellsInGrid() &&
                !hasRepetitionInGrid();
     }
 
@@ -106,8 +102,8 @@ public final class SudokuGrid {
         return cellValues.size() != new HashSet<>(cellValues).size();
     }
 
-    private boolean hasPlayableCellsInGrid() {
-        return cells.stream().anyMatch(cell -> cell.getState() == PLAYABLE);
+    private boolean hasZeroedCellsInGrid() {
+        return cells.stream().anyMatch(cell -> cell.getValue() == 0);
     }
 
     List<Integer> getBlockForCell(int blockLocation) {
