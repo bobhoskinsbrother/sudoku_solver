@@ -3,9 +3,9 @@ package io.hahai;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static io.hahai.SudokuGrid.CellState.PLAYABLE;
 import static io.hahai.SudokuGrid.CellState.PRESET;
@@ -51,7 +51,7 @@ public final class SudokuGrid {
 
     public List<Integer> playableOptions(int index) {
         if (playable(index)) {
-            List<Integer> reply = create();
+            List<Integer> reply = create1ToNList(GRID_DIMENSION);
             List<Integer> column = getColumnForCell(index);
             List<Integer> block = getBlockForCell(index);
             List<Integer> row = getRowForCell(index);
@@ -111,8 +111,8 @@ public final class SudokuGrid {
     }
 
     int blockNumberStartFrom(int location) {
-        int threeByThree = BLOCK_DIMENSION*GRID_DIMENSION;
-        return threeByThree * (location / threeByThree) + BLOCK_DIMENSION * ((location % GRID_DIMENSION) / BLOCK_DIMENSION);
+        int blockRowSize = BLOCK_DIMENSION*GRID_DIMENSION;
+        return blockRowSize * (location / blockRowSize) + BLOCK_DIMENSION * ((location % GRID_DIMENSION) / BLOCK_DIMENSION);
     }
 
     private int columnNumberFrom(int location) {
@@ -123,7 +123,7 @@ public final class SudokuGrid {
         return (location / GRID_DIMENSION);
     }
 
-    private Cell getCell(int index) {
+    private Cell getCell(int index) throws IllegalArgumentException {
         try {
             return cells.get(index);
         } catch (IndexOutOfBoundsException e) {
@@ -131,8 +131,10 @@ public final class SudokuGrid {
         }
     }
 
-    private List<Integer> create() {
-        return new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9));
+    List<Integer> create1ToNList(int gridDimension) throws IllegalArgumentException {
+        int start = 1;
+        if(gridDimension<start) { throw new IllegalArgumentException("cannot be less than start"); }
+        return IntStream.rangeClosed(start, gridDimension).boxed().collect(Collectors.toList());
     }
 
 }
