@@ -97,6 +97,57 @@ public final class SudokuGridTest {
         assertThat(unit.gridValid(), is(false));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void cannotPlayWhenValueIsNotInOptions() {
+        String grid =
+                " - 1 4 2 6 8 7 5 9" +
+                " 5 8 2 1 7 9 4 3 6" +
+                " 6 7 9 3 4 5 1 2 8" +
+                " 1 2 7 8 3 4 9 6 5" +
+                " 4 5 6 9 2 1 3 8 7" +
+                " 8 9 3 6 5 7 2 1 4" +
+                " 2 3 8 4 9 6 5 7 1" +
+                " 9 6 5 7 1 2 8 4 3" +
+                " 7 4 1 5 8 3 6 9 2";
+        final StringReader reader = new StringReader(grid);
+        SudokuGrid unit = new SudokuGrid(reader);
+        unit.play(0,1);
+    }
+
+    @Test public void canPlayWhenValueIsInOptions() {
+        String grid =
+                " - 1 4 2 6 8 7 5 -" +
+                " 5 8 2 1 7 9 4 3 6" +
+                " 6 7 - 3 4 5 1 2 8" +
+                " 1 2 7 8 3 4 9 6 5" +
+                " 4 5 6 9 2 1 3 8 7" +
+                " 8 9 3 6 5 7 2 1 4" +
+                " 2 3 8 4 9 6 5 7 1" +
+                " - 6 5 7 1 2 8 4 3" +
+                " 7 4 1 5 8 3 6 9 2";
+        final StringReader reader = new StringReader(grid);
+        SudokuGrid unit = new SudokuGrid(reader);
+        unit.play(0,9);
+        unit.play(0,3);
+    }
+
+    @Test public void remainsPlayableAfterPlayed() {
+        String grid =
+                " - 1 4 2 6 8 7 5 -" +
+                " 5 8 2 1 7 9 4 3 6" +
+                " 6 7 - 3 4 5 1 2 8" +
+                " 1 2 7 8 3 4 9 6 5" +
+                " 4 5 6 9 2 1 3 8 7" +
+                " 8 9 3 6 5 7 2 1 4" +
+                " 2 3 8 4 9 6 5 7 1" +
+                " - 6 5 7 1 2 8 4 3" +
+                " 7 4 1 5 8 3 6 9 2";
+        final StringReader reader = new StringReader(grid);
+        SudokuGrid unit = new SudokuGrid(reader);
+        unit.play(0,9);
+        assertThat(unit.playable(0), is(true));
+    }
+
     @Test public void gridIsCompleteWhenFullyFilledIn() {
         String grid =
                 " - 1 4 2 6 8 7 5 9" +

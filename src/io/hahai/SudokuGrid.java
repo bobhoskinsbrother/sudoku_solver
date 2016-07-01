@@ -29,7 +29,10 @@ public final class SudokuGrid {
         blockDimension = (int) Math.sqrt(gridDimension);
     }
 
-    public void play(int index, int value) {
+    public void play(int index, int value) throws IllegalArgumentException {
+        if(!playableOptions(index).contains(value)) {
+            throw new IllegalArgumentException("Cannot play this value for this cell");
+        }
         cells.set(index, new Cell(index, ATTEMPTED, value));
     }
 
@@ -72,7 +75,8 @@ public final class SudokuGrid {
     }
 
     public boolean playable(int index) {
-        return getCell(index).getState() == PLAYABLE;
+        CellState state = getCell(index).getState();
+        return state == PLAYABLE || state == ATTEMPTED;
     }
 
     public boolean gridValid() {
