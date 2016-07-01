@@ -49,7 +49,101 @@ public final class SudokuGridTest {
         unit.create1ToNList(-1);
     }
 
-    @Test public void canInitialiseGrid() {
+    @Test public void canInitialiseValidGrid9x9() {
+        String grid =
+                " 3 1 4 2 6 8 7 5 9" +
+                " 5 8 2 1 7 9 4 3 6" +
+                " 6 7 9 3 4 5 1 2 8" +
+                " 1 2 7 8 3 4 9 6 5" +
+                " 4 5 6 9 2 1 3 8 7" +
+                " 8 9 3 6 5 7 2 1 4" +
+                " 2 3 8 4 9 6 5 7 1" +
+                " 9 6 5 7 1 2 8 4 3" +
+                " 7 4 1 5 8 3 6 9 2";
+        final StringReader reader = new StringReader(grid);
+        SudokuGrid unit = new SudokuGrid(reader);
+        assertThat(unit.gridValid(), is(true));
+    }
+
+    @Test public void canInitialiseValidGrid9x9ButIsInvalidDueToRepeatInRow() {
+        String grid =
+                " - 9 4 2 6 8 7 5 9" +
+                " 5 8 2 1 7 9 4 3 6" +
+                " 6 7 9 3 4 5 1 2 8" +
+                " 1 2 7 8 3 4 9 6 5" +
+                " 4 5 6 9 2 1 3 8 7" +
+                " 8 - 3 6 5 7 2 1 4" +
+                " 2 3 8 4 9 6 5 7 1" +
+                " 9 6 5 7 1 2 8 4 3" +
+                " 7 4 1 5 8 3 6 9 2";
+        final StringReader reader = new StringReader(grid);
+        SudokuGrid unit = new SudokuGrid(reader);
+        assertThat(unit.gridValid(), is(false));
+    }
+
+    @Test public void canInitialiseValidGrid9x9ButIsInvalidDueToRepeatInColumn() {
+        String grid =
+                " 1 - 4 2 6 8 7 5 9" +
+                " 5 8 2 1 7 9 4 3 6" +
+                " 6 7 9 3 4 5 1 2 8" +
+                " 1 2 7 8 3 4 9 6 5" +
+                " 4 5 6 9 2 1 3 8 7" +
+                " 8 - 3 6 5 7 2 1 4" +
+                " 2 3 8 4 9 6 5 7 1" +
+                " 9 6 5 7 1 2 8 4 3" +
+                " 7 4 1 5 8 3 6 9 2";
+        final StringReader reader = new StringReader(grid);
+        SudokuGrid unit = new SudokuGrid(reader);
+        assertThat(unit.gridValid(), is(false));
+    }
+
+    @Test public void gridIsCompleteWhenFullyFilledIn() {
+        String grid =
+                " - 1 4 2 6 8 7 5 9" +
+                " 5 8 2 1 7 9 4 3 6" +
+                " 6 7 9 3 4 5 1 2 8" +
+                " 1 2 7 8 3 4 9 6 5" +
+                " 4 5 6 9 2 1 3 8 7" +
+                " 8 9 3 6 5 7 2 1 4" +
+                " 2 3 8 4 9 6 5 7 1" +
+                " 9 6 5 7 1 2 8 4 3" +
+                " 7 4 1 5 8 3 6 9 2";
+        final StringReader reader = new StringReader(grid);
+        SudokuGrid unit = new SudokuGrid(reader);
+        assertThat(unit.gridComplete(), is(false));
+        unit.play(0,3);
+        assertThat(unit.gridComplete(), is(true));
+    }
+
+    @Test public void canInitialiseValidGrid9x9ButIsInvalidDueToRepeatInBlock() {
+        String grid =
+                " 3 1 4 2 6 8 7 5 9" +
+                " 5 9 2 1 7 - 4 3 6" +
+                " 6 7 9 3 4 5 1 2 8" +
+                " 1 2 7 8 3 4 9 6 5" +
+                " 4 5 6 9 2 1 3 8 7" +
+                " 8 - 3 6 5 7 2 1 4" +
+                " 2 3 8 4 9 6 5 7 1" +
+                " 9 6 5 7 1 2 8 4 3" +
+                " 7 4 1 5 8 3 6 9 2";
+        final StringReader reader = new StringReader(grid);
+        SudokuGrid unit = new SudokuGrid(reader);
+        assertThat(unit.gridValid(), is(false));
+    }
+
+    @Test public void canInitialiseValidGrid4x4() {
+        String grid =
+                " 1 2 3 4" +
+                " 4 3 2 1" +
+                " 3 4 1 2" +
+                " 2 1 4 3"
+                ;
+        final StringReader reader = new StringReader(grid);
+        SudokuGrid unit = new SudokuGrid(reader);
+        assertThat(unit.gridValid(), is(true));
+    }
+
+    @Test public void cannotInitialiseANotSquareGrid() {
         String grid =
                 " - 1 4 - 6 8 7 5 9" +
                 " 5 8 2 1 7 9 4 3 6" +
@@ -59,10 +153,10 @@ public final class SudokuGridTest {
                 " 8 9 3 6 5 7 2 1 4" +
                 " 2 3 8 - 9 6 5 7 1" +
                 " 9 6 5 7 1 2 8 4 3" +
-                " 7 4 1 5 8 3 6 9 2";
+                " 7 4 1 5 8 3 6 9 ";
         final StringReader reader = new StringReader(grid);
         final SudokuGrid unit = new SudokuGrid(reader);
-        assertThat(unit.valid(), is(true));
+        assertThat(unit.gridValid(), is(false));
     }
 
     @Test public void canVerifyPlayableOptionsOnHorizontal() {
@@ -86,11 +180,11 @@ public final class SudokuGridTest {
 
         List<Integer> playableOptions = unit.playableOptions(3);
         assertThat(playableOptions.size(), is(2));
-        assertThat(playableOptions, containsInAnyOrder(2,3));
+        assertThat(playableOptions, containsInAnyOrder(2, 3));
 
         playableOptions = unit.playableOptions(0);
         assertThat(playableOptions.size(), is(2));
-        assertThat(playableOptions, containsInAnyOrder(2,3));
+        assertThat(playableOptions, containsInAnyOrder(2, 3));
     }
 
     @Test public void canVerifyPlayableOptionsOnVertical() {
@@ -112,11 +206,11 @@ public final class SudokuGridTest {
 
         List<Integer> playableOptions = unit.playableOptions(1);
         assertThat(playableOptions.size(), is(3));
-        assertThat(playableOptions, containsInAnyOrder(3,8,9));
+        assertThat(playableOptions, containsInAnyOrder(3, 8, 9));
 
         playableOptions = unit.playableOptions(64);
         assertThat(playableOptions.size(), is(3));
-        assertThat(playableOptions, containsInAnyOrder(3,8,9));
+        assertThat(playableOptions, containsInAnyOrder(3, 8, 9));
     }
 
     @Test public void canVerifyPlayableOptionsOnBlock() {
@@ -139,11 +233,11 @@ public final class SudokuGridTest {
 
         List<Integer> playableOptions = unit.playableOptions(39);
         assertThat(playableOptions.size(), is(4));
-        assertThat(playableOptions, containsInAnyOrder(4,5,7,9));
+        assertThat(playableOptions, containsInAnyOrder(4, 5, 7, 9));
 
         playableOptions = unit.playableOptions(41);
         assertThat(playableOptions.size(), is(4));
-        assertThat(playableOptions, containsInAnyOrder(4,5,7,9));
+        assertThat(playableOptions, containsInAnyOrder(4, 5, 7, 9));
     }
 
     @Test public void canVerifyPlayableOptionsOnEveryDimension() {
