@@ -1,0 +1,65 @@
+<project name="sudoku_solver" default="sudoku_solver" basedir=".">
+
+    <include file="./all_filesets.xml"/>
+    <include file="./common.xml"/>
+    <property file="./build.properties"/>
+    <dirname property="sudoku_solver.basedir" file="${ant.file.sudoku_solver}"/>
+    <tstamp/>
+    <property name="sudoku_solver.jar" value="sudoku_solver_${DSTAMP}.jar"/>
+    <property name="sudoku_solver_test.jar" value="sudoku_solver_test_${DSTAMP}.jar"/>
+
+    <target name="sudoku_solver" depends="make.sudoku_solver,test.sudoku_solver,save.sudoku_solver"/>
+
+    <target name="make.sudoku_solver" depends="clean.sudoku_solver">
+        <make module="${sudoku_solver.basedir}" jarname="${sudoku_solver.jar}" source="src" targetdir="made">
+            <make.classpath>
+                <classpath>
+                    <resources refid="compile.sudoku_solver.fileset"/>
+                </classpath>
+            </make.classpath>
+        </make>
+        <make module="${sudoku_solver.basedir}" jarname="${sudoku_solver_test.jar}" source="test" targetdir="made">
+            <make.classpath>
+                <classpath>
+                    <pathelement location="${sudoku_solver.basedir}/made/${sudoku_solver.jar}"/>
+                    <resources refid="compile.sudoku_solver.fileset"/>
+                    <fileset refid="unit_tests"/>
+                </classpath>
+            </make.classpath>
+        </make>
+    </target>
+
+    <target name="test.sudoku_solver">
+        <test jarname="${sudoku_solver.basedir}/made/${sudoku_solver_test.jar}"
+              basedir="${sudoku_solver.basedir}">
+            <test.classpath>
+                <classpath>
+                    <pathelement location="${sudoku_solver.basedir}/made/${sudoku_solver_test.jar}"/>
+                    <pathelement location="${sudoku_solver.basedir}/made/${sudoku_solver.jar}"/>
+                    <resources refid="compile.sudoku_solver.fileset"/>
+                    <fileset refid="unit_tests"/>
+                </classpath>
+            </test.classpath>
+        </test>
+    </target>
+
+    <target name="save.sudoku_solver">
+        <save targetdir="${sudoku_solver.basedir}/dist">
+            <save.fileset>
+                <fileset dir="${sudoku_solver.basedir}/made" includes="${sudoku_solver.jar}"/>
+            </save.fileset>
+        </save>
+    </target>
+
+    <target name="clean.sudoku_solver">
+        <init.dir dir="${sudoku_solver.basedir}/made"/>
+        <init.dir dir="${sudoku_solver.basedir}/dist"/>
+    </target>
+
+
+    <union id="compile.sudoku_solver.fileset">
+        <resources refid="json"/>
+    </union>
+
+
+</project>
