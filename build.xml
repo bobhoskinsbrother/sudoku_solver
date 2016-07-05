@@ -10,6 +10,18 @@
 
     <target name="sudoku_solver" depends="make.sudoku_solver,test.sudoku_solver,save.sudoku_solver"/>
 
+    <target name="generate_run_sudoku_shell_scripts">
+        <echo file="${sudoku_solver.basedir}/made/run_sudoku.sh">#!/bin/sh
+nohup java -classpath "libs/*" io.hahai.sudoku.server.SudokuWebServer > sudoku.log 2>&amp;1&amp; echo $! >> running_pids
+        </echo>
+        <echo file="${sudoku_solver.basedir}/made/kill_sudoku.sh">#!/bin/sh
+kill -9 `cat running_pids`
+rm -f running_pids
+rm *.log
+        </echo>
+    </target>
+
+
     <target name="make.sudoku_solver" depends="clean.sudoku_solver">
         <make module="${sudoku_solver.basedir}" jarname="${sudoku_solver.jar}" source="src" targetdir="made">
             <make.classpath>
@@ -27,6 +39,7 @@
                 </classpath>
             </make.classpath>
         </make>
+        <antcall target="generate_run_sudoku_shell_scripts"/>
     </target>
 
     <target name="test.sudoku_solver">
@@ -44,13 +57,14 @@
     </target>
 
     <target name="save.sudoku_solver">
-        <save targetdir="${sudoku_solver.basedir}/dist">
-            <save.fileset>
-                <fileset dir="${sudoku_solver.basedir}/made" includes="${sudoku_solver.jar}"/>
-            </save.fileset>
-        </save>
+        <zip destfile="${sudoku_solver.basedir}/dist/sudoku_solver.zip">
+            <zipfileset dir="${sudoku_solver.basedir}/made/" includes="*.sh" prefix="./sudoku_solver" filemode="755"/>
+            <zipfileset dir="${sudoku_solver.basedir}/made/" includes="*.jar" prefix="./sudoku_solver/libs" />
+            <zipfileset dir="${sudoku_solver.basedir}/libs/production/jetty/" includes="*.jar" prefix="./sudoku_solver/libs"/>
+        </zip>
     </target>
-
+    
+    
     <target name="clean.sudoku_solver">
         <init.dir dir="${sudoku_solver.basedir}/made"/>
         <init.dir dir="${sudoku_solver.basedir}/dist"/>
@@ -59,6 +73,7 @@
 
     <union id="compile.sudoku_solver.fileset">
         <resources refid="json"/>
+        <resources refid="jetty"/>
     </union>
 
 

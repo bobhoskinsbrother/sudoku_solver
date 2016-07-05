@@ -5,6 +5,7 @@ public final class Cell {
     private final int index;
     private Grid.CellState state;
     private int numericValue;
+    private boolean valid = false;
 
     public Cell(int index, Grid.CellState state, int numericValue) {
         this.index = index;
@@ -24,5 +25,9 @@ public final class Cell {
     public int getIndex() {
         return index;
     }
+
+    public boolean isValid() { return valid; }
+    public void invalid() { this.valid = false; }
+    public void valid() { this.valid = true; }
 
 }

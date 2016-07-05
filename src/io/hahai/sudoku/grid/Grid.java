@@ -2,12 +2,12 @@ package io.hahai.sudoku.grid;
 
 import io.hahai.sudoku.solver.Solver;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -16,16 +16,23 @@ public final class Grid {
     private final int gridDimension;
     private final int blockDimension;
 
-
     public enum CellState {PRESET, PLAYABLE}
 
     private List<Cell> cells;
 
     public Grid(Reader reader) throws IllegalArgumentException {
-        cells = new ArrayList<>();
-        loadCellsFrom(reader);
+        resetWith(reader);
         gridDimension = (int) Math.sqrt(cells.size());
         blockDimension = (int) Math.sqrt(gridDimension);
+    }
+
+    public static Reader defaultGameReader() {
+        return new BufferedReader(new InputStreamReader(Grid.class.getClassLoader().getResourceAsStream("game.sudoku")));
+    }
+
+    public void resetWith(Reader reader) {
+        cells = new CopyOnWriteArrayList<>();
+        loadCellsFrom(reader);
     }
 
     public int dimension() {
@@ -33,7 +40,7 @@ public final class Grid {
     }
 
     public List<Cell> playableCells() {
-        return playableCellsInCollection(cells);
+        return cells.stream().filter(cell -> cell.getState() == CellState.PLAYABLE).collect(Collectors.toList());
     }
 
     public int size() {
@@ -47,40 +54,16 @@ public final class Grid {
     public void applySolvers(Solver... solvers) {
         for (Solver solver : solvers) {
             solver.attemptSolve(this);
-            if(isGridCompleteAndCorrect()) {
+            if (isGridCompleteAndCorrect()) {
                 break;
             }
         }
     }
 
-    public void play(int cellIndex, int value) throws IllegalArgumentException {
-        if (!playableOptions(cellIndex).contains(value)) {
-            throw new IllegalArgumentException("Cannot play this value for this cell");
-        }
-        cells.set(cellIndex, new Cell(cellIndex, CellState.PLAYABLE, value));
-    }
-
-    private List<Cell> playableCellsInCollection(List<Cell> allCells) {
-        return allCells.stream().filter(cell -> cell.getState() == CellState.PLAYABLE).collect(Collectors.toList());
-    }
-
-    private void loadCellsFrom(Reader reader) throws IllegalArgumentException {
-        int current;
-        int count = 0;
-        try {
-            while ((current = reader.read()) != -1) {
-                char c = (char) current;
-                if ('.' == c) {
-                    cells.add(new Cell(count));
-                    count++;
-                } else if (Character.isDigit(c)) {
-                    cells.add(new Cell(count, CellState.PRESET, Character.getNumericValue(c)));
-                    count++;
-                }
-            }
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+    public List<Cell> play(int cellIndex, int value) {
+        clearCell(cellIndex);
+        setValueOfCell(cellIndex, playedCell(cellIndex, value));
+        return validateGridAndFlagRepetitionsIgnoringZeroes();
     }
 
     public List<Integer> playableOptions(int cellIndex) {
@@ -99,34 +82,18 @@ public final class Grid {
         return state == CellState.PLAYABLE;
     }
 
-    public boolean isValidGrid() {
+    public boolean isGridInitialisedCorrectly() {
         boolean isSquare = gridDimension == (blockDimension * blockDimension) && cells.size() == (gridDimension * gridDimension);
-        return isSquare && !hasRepetitionInGrid();
+        return isSquare && !hasRepetitionInGridIgnoreZeroes();
     }
 
     public boolean isGridCompleteAndCorrect() {
-        return !hasZeroedCellsInGrid() && !hasRepetitionInGrid();
+        List<Cell> validated = validateGridAndFlagRepetitionsIgnoringZeroes();
+        return !hasZeroedCellsInGrid() && isAllValid(validated);
     }
 
-    private boolean hasRepetitionInGrid() {
-        for (Cell cell : cells) {
-            List<Integer> row = getRowForCell(cell.getIndex());
-            List<Integer> block = getBlockForCell(cell.getIndex());
-            List<Integer> column = getColumnForCell(cell.getIndex());
-            if (hasRepetition(row) || hasRepetition(block) || hasRepetition(column)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean hasRepetition(List<Integer> cellValues) {
-        cellValues.removeAll(Collections.singletonList(0));
-        return cellValues.size() != new HashSet<>(cellValues).size();
-    }
-
-    private boolean hasZeroedCellsInGrid() {
-        return cells.stream().anyMatch(cell -> cell.getValue() == 0);
+    public void accept(SudokuCellVisitor visitor) {
+        cells.forEach(visitor::visit);
     }
 
     List<Integer> getBlockForCell(int cellIndex) {
@@ -150,7 +117,8 @@ public final class Grid {
         int count = 0;
         while (count < gridDimension) {
             final int i = rowLocation + count;
-            reply.add(cells.get(i).getValue());
+            Cell cell = cells.get(i);
+            reply.add(cell.getValue());
             count++;
         }
         return reply;
@@ -168,9 +136,65 @@ public final class Grid {
         return reply;
     }
 
+    List<Integer> create1ToNList(int n) throws IllegalArgumentException {
+        int one = 1;
+        if (n < one) {
+            throw new IllegalArgumentException("cannot be less than one");
+        }
+        return IntStream.rangeClosed(one, n).boxed().collect(Collectors.toList());
+    }
+
     int blockNumberStartFrom(int cellIndex) {
         int blockRowSize = blockDimension * gridDimension;
         return blockRowSize * (cellIndex / blockRowSize) + blockDimension * ((cellIndex % gridDimension) / blockDimension);
+    }
+
+    private List<Cell> validateGridAndFlagRepetitionsIgnoringZeroes() {
+        List<Cell> playableCells = playableCells();
+        playableCells.forEach(cell -> {
+            if (cellHasRepetitionIgnoreZeroes(cell) && !isCellEmpty(cell)) {
+                cell.invalid();
+            } else {
+                cell.valid();
+            }
+        });
+        return playableCells;
+    }
+
+    private boolean isCellEmpty(Cell cell) {
+        return cell.getValue() == 0;
+    }
+
+    private boolean isAllValid(List<Cell> validated) {return validated.stream().allMatch(Cell::isValid);}
+
+    private boolean hasRepetitionInGridIgnoreZeroes() {
+        for (Cell cell : cells) {
+            if (cellHasRepetitionIgnoreZeroes(cell)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean cellHasRepetitionIgnoreZeroes(Cell cell) {
+        List<Integer> row = getRowForCell(cell.getIndex());
+        List<Integer> block = getBlockForCell(cell.getIndex());
+        List<Integer> column = getColumnForCell(cell.getIndex());
+        return hasRepetitionIgnoreZeroes(row, cell) || hasRepetitionIgnoreZeroes(block, cell) || hasRepetitionIgnoreZeroes(column, cell);
+    }
+
+    private boolean hasRepetitionIgnoreZeroes(List<Integer> cellValues, Cell cell) {
+        cellValues.removeAll(Collections.singletonList(0));
+
+        Set<Integer> allItems = new HashSet<>();
+        Set<Integer> duplicates = cellValues.stream().filter(n -> !allItems.add(n)) //Set.add() returns false if the item was already in the set.
+                .collect(Collectors.toSet());
+
+        return duplicates.contains(cell.getValue());
+    }
+
+    private boolean hasZeroedCellsInGrid() {
+        return cells.stream().anyMatch(cell -> cell.getValue() == 0);
     }
 
     private int columnNumberFrom(int cellIndex) {
@@ -189,12 +213,33 @@ public final class Grid {
         }
     }
 
-    List<Integer> create1ToNList(int n) throws IllegalArgumentException {
-        int one = 1;
-        if (n < one) {
-            throw new IllegalArgumentException("cannot be less than one");
+    private Cell playedCell(int cellIndex, int value) {return new Cell(cellIndex, CellState.PLAYABLE, value);}
+
+    private void setValueOfCell(int cellIndex, Cell element) {cells.set(cellIndex, element);}
+
+    private void clearCell(int cellIndex) {
+        setValueOfCell(cellIndex, emptyPlayableCell(cellIndex));
+    }
+
+    private Cell emptyPlayableCell(int cellIndex) {return new Cell(cellIndex);}
+
+    private void loadCellsFrom(Reader reader) throws IllegalArgumentException {
+        int current;
+        int count = 0;
+        try {
+            while ((current = reader.read()) != -1) {
+                char c = (char) current;
+                if ('.' == c) {
+                    cells.add(emptyPlayableCell(count));
+                    count++;
+                } else if (Character.isDigit(c)) {
+                    cells.add(new Cell(count, CellState.PRESET, Character.getNumericValue(c)));
+                    count++;
+                }
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
         }
-        return IntStream.rangeClosed(one, n).boxed().collect(Collectors.toList());
     }
 
 }

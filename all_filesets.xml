@@ -20,7 +20,7 @@
         <include name="servlet-api-3.1.jar"/>
     </fileset>
 
-    <fileset id="json" dir="${all_filesets.basedir}/libs/production/">
+    <fileset id="json" dir="${all_filesets.basedir}/libs/production/jetty/">
         <include name="minimal-json-0.9.2.jar"/>
     </fileset>
 

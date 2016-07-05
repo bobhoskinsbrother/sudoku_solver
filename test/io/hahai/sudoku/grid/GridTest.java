@@ -62,7 +62,7 @@ public final class GridTest {
                 " 7 4 1 5 8 3 6 9 2";
         final StringReader reader = new StringReader(grid);
         Grid unit = new Grid(reader);
-        assertThat(unit.isValidGrid(), is(true));
+        assertThat(unit.isGridInitialisedCorrectly(), is(true));
     }
 
     @Test public void canInitialiseValidGrid9x9NoSpaces() {
@@ -78,13 +78,13 @@ public final class GridTest {
                 "741583692";
         final StringReader reader = new StringReader(grid);
         Grid unit = new Grid(reader);
-        assertThat(unit.isValidGrid(), is(true));
+        assertThat(unit.isGridInitialisedCorrectly(), is(true));
     }
 
     @Test public void canInitialiseValidGrid9x9SpacesForBlocks() {
         String grid =
                 "314 268 759" +
-                        "582 179 436" +
+                "582 179 436" +
                 "679 345 128" +
                 "           " +
                 "127 834 965" +
@@ -96,7 +96,7 @@ public final class GridTest {
                 "741 583 692";
         final StringReader reader = new StringReader(grid);
         Grid unit = new Grid(reader);
-        assertThat(unit.isValidGrid(), is(true));
+        assertThat(unit.isGridInitialisedCorrectly(), is(true));
     }
 
     @Test public void canInitialiseValidGrid9x9SpacesAndLines() {
@@ -116,7 +116,7 @@ public final class GridTest {
                 "└───────┴───────┴───────┘";
         final StringReader reader = new StringReader(grid);
         Grid unit = new Grid(reader);
-        assertThat(unit.isValidGrid(), is(true));
+        assertThat(unit.isGridInitialisedCorrectly(), is(true));
     }
 
     @Test public void canInitialiseValidGrid9x9ButIsInvalidDueToRepeatInRow() {
@@ -132,7 +132,7 @@ public final class GridTest {
                 " 7 4 1 5 8 3 6 9 2";
         final StringReader reader = new StringReader(grid);
         Grid unit = new Grid(reader);
-        assertThat(unit.isValidGrid(), is(false));
+        assertThat(unit.isGridInitialisedCorrectly(), is(false));
     }
 
     @Test public void canInitialiseValidGrid9x9ButIsInvalidDueToRepeatInColumn() {
@@ -148,11 +148,11 @@ public final class GridTest {
                 " 7 4 1 5 8 3 6 9 2";
         final StringReader reader = new StringReader(grid);
         Grid unit = new Grid(reader);
-        assertThat(unit.isValidGrid(), is(false));
+        assertThat(unit.isGridInitialisedCorrectly(), is(false));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void cannotPlayWhenValueIsNotALegalMove() {
+    @Test
+    public void canPlayWhenValueIsNotALegalMoveButWillFlagAsInvalid() {
         String grid =
                 " . 1 4 2 6 8 7 5 9" +
                 " 5 8 2 1 7 9 4 3 6" +
@@ -166,6 +166,33 @@ public final class GridTest {
         final StringReader reader = new StringReader(grid);
         Grid unit = new Grid(reader);
         unit.play(0, 1);
+        assertThat(unit.playableCells().get(0).isValid(), is(false));
+        unit.play(0, 3);
+        assertThat(unit.playableCells().get(0).isValid(), is(true));
+    }
+
+    @Test
+    public void canValidate2ValuesCorrectly() {
+        String grid =
+                " . 1 4 2 6 8 7 5 ." +
+                " 5 8 2 1 7 9 4 3 6" +
+                " 6 7 9 3 4 5 1 2 8" +
+                " 1 2 7 8 3 4 9 6 5" +
+                " 4 5 6 9 2 1 3 8 7" +
+                " 8 9 3 6 5 7 2 1 4" +
+                " 2 3 8 4 9 6 5 7 1" +
+                " 9 6 5 7 1 2 8 4 3" +
+                " 7 4 1 5 8 3 6 9 2";
+        final StringReader reader = new StringReader(grid);
+        Grid unit = new Grid(reader);
+        unit.play(0, 1);
+        unit.play(8, 9);
+        assertThat(unit.playableCells().get(0).isValid(), is(false));
+        assertThat(unit.playableCells().get(1).isValid(), is(true));
+        unit.play(0, 3);
+        assertThat(unit.playableCells().get(0).isValid(), is(true));
+        assertThat(unit.playableCells().get(1).isValid(), is(true));
+        unit.play(0, 3);
     }
 
     @Test public void canPlayWhenValueIsInOptions() {
@@ -181,7 +208,7 @@ public final class GridTest {
                 " 7 4 1 5 8 3 6 9 2";
         final StringReader reader = new StringReader(grid);
         Grid unit = new Grid(reader);
-        unit.play(0,9);
+        unit.play(0, 9);
         unit.play(0, 3);
     }
 
@@ -193,7 +220,7 @@ public final class GridTest {
                 " 1 2 7 8 3 4 9 6 5" +
                 " 4 5 6 9 2 1 3 8 7" +
                 " 8 9 3 6 5 7 2 1 4" +
-                        " 2 3 8 4 9 6 5 7 1" +
+                " 2 3 8 4 9 6 5 7 1" +
                 " . 6 5 7 1 2 8 4 3" +
                 " 7 4 1 5 8 3 6 9 2";
         final StringReader reader = new StringReader(grid);
@@ -211,7 +238,7 @@ public final class GridTest {
                 " 4 5 6 9 2 1 3 8 7" +
                 " 8 9 3 6 5 7 2 1 4" +
                 " 2 3 8 4 9 6 5 7 1" +
-                        " . 6 5 7 1 2 8 4 3" +
+                " . 6 5 7 1 2 8 4 3" +
                 " 7 4 1 5 8 3 6 9 2";
         final StringReader reader = new StringReader(grid);
         Grid unit = new Grid(reader);
@@ -251,7 +278,7 @@ public final class GridTest {
                 " 7 4 1 5 8 3 6 9 2";
         final StringReader reader = new StringReader(grid);
         Grid unit = new Grid(reader);
-        assertThat(unit.isValidGrid(), is(false));
+        assertThat(unit.isGridInitialisedCorrectly(), is(false));
     }
 
     @Test public void canInitialiseValidGrid4x4() {
@@ -263,7 +290,7 @@ public final class GridTest {
                 ;
         final StringReader reader = new StringReader(grid);
         Grid unit = new Grid(reader);
-        assertThat(unit.isValidGrid(), is(true));
+        assertThat(unit.isGridInitialisedCorrectly(), is(true));
     }
 
     @Test public void cannotInitialiseANotSquareGrid() {
@@ -278,7 +305,7 @@ public final class GridTest {
                 " 7 4 1 5 8 3 6 9 ";
         final StringReader reader = new StringReader(grid);
         final Grid unit = new Grid(reader);
-        assertThat(unit.isValidGrid(), is(false));
+        assertThat(unit.isGridInitialisedCorrectly(), is(false));
     }
 
     @Test public void canVerifyPlayableOptionsOnHorizontal() {
